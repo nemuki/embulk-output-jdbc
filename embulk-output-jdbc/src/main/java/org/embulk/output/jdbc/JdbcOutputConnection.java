@@ -377,9 +377,9 @@ public class JdbcOutputConnection
         // The SQL string created here looks like this:
         // MERGE INTO `table-name` USING (
         //     VALUES (
-        //         ?,
-        //         ?,
-        //         ?
+        //         CAST(? AS `type-name`),
+        //         CAST(? AS `type-name`),
+        //         CAST(? AS `type-name`)
         //     )
         // ) AS tmp (
         //     `column-name1`,
@@ -409,7 +409,14 @@ public class JdbcOutputConnection
             if (i != 0) {
                 sb.append(", ");
             }
-            sb.append("?");
+            JdbcColumn column = toTableSchema.getColumn(i);
+            String typeName;
+            if (column.getSimpleTypeName().equals("VARCHAR")) {
+                typeName = column.getSimpleTypeName() + "(" + column.getSizeTypeParameter() + ")";
+            } else {
+                typeName = column.getSimpleTypeName();
+            }
+            sb.append("CAST(? AS " + typeName + ")");
         }
         sb.append(" )");
         sb.append(" ) AS tmp (");
