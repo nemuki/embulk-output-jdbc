@@ -371,7 +371,8 @@ public class JdbcOutputConnection
     {
         // NOTE: This implementation is dedicated to IBM DB2. Do not use this for other RDBMS, otherwise some errors may occur.
 
-        // We run the MERGE statement to perform an UPSERT.
+        // We run the MERGE statement to perform an UPDATE.
+        // NOTE: We perform UPDATE only, new records for the destination are ignored.
         // https://www.ibm.com/docs/ja/db2/9.7?topic=statements-merge
         //
         // The SQL string created here looks like this:
@@ -391,15 +392,7 @@ public class JdbcOutputConnection
         //     `colum-name1` = tmp.`column-name1`,
         //     `colum-name2` = tmp.`column-name2`,
         //     `colum-name3` = tmp.`column-name3`
-        // WHEN NOT MATCHED THEN INSERT (
-        //     `colum-name1`,
-        //     `colum-name2`,
-        //     `colum-name3`
-        // ) VALUES (
-        //     tmp.`colum-name1`,
-        //     tmp.`colum-name2`,
-        //     tmp.`colum-name3`
-        // )
+        // ELSE IGNORE;
         StringBuilder sb = new StringBuilder();
         sb.append("MERGE INTO ");
         quoteTableIdentifier(sb, toTable);
@@ -454,22 +447,26 @@ public class JdbcOutputConnection
             quoteIdentifierString(sb, column.getName());
         }
 
-        sb.append(" WHEN NOT MATCHED THEN INSERT (");
-        for (int i = 0; i < toTableSchema.getCount(); i++) {
-            if (i != 0) {
-                sb.append(", ");
-            }
-            quoteIdentifierString(sb, toTableSchema.getColumn(i).getName());
-        }
-        sb.append(") VALUES (");
-        for (int i = 0; i < toTableSchema.getCount(); i++) {
-            if (i != 0) {
-                sb.append(", ");
-            }
-            sb.append("tmp.");
-            quoteIdentifierString(sb, toTableSchema.getColumn(i).getName());
-        }
-        sb.append(")");
+        // Don't INSERT
+
+//        sb.append(" WHEN NOT MATCHED THEN INSERT (");
+//        for (int i = 0; i < toTableSchema.getCount(); i++) {
+//            if (i != 0) {
+//                sb.append(", ");
+//            }
+//            quoteIdentifierString(sb, toTableSchema.getColumn(i).getName());
+//        }
+//        sb.append(") VALUES (");
+//        for (int i = 0; i < toTableSchema.getCount(); i++) {
+//            if (i != 0) {
+//                sb.append(", ");
+//            }
+//            sb.append("tmp.");
+//            quoteIdentifierString(sb, toTableSchema.getColumn(i).getName());
+//        }
+//        sb.append(")");
+
+        sb.append(" ELSE IGNORE ");
 
         return sb.toString();
 
