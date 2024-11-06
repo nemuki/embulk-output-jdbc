@@ -86,8 +86,14 @@ public class StandardBatchInsert
             logger.info(String.format("> %.2f seconds (loaded %,d rows in total)", seconds, totalRows));
 
         } catch (BatchUpdateException e) {
-            // Output the exception message further to provide a detailed cause.
-            logger.error(e.getNextException().getMessage());
+            SQLException ex = e.getNextException();
+
+            while (ex != null) {
+                // Output the exception message further to provide a detailed cause.
+                logger.error(ex.getMessage());
+                ex = ex.getNextException();
+            }
+
             // will be used for retry
             lastUpdateCounts = e.getUpdateCounts();
             throw e;
